@@ -23,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import VideoPlayer from "@/components/VideoPlayer";
 import { DiscussionForum } from "@/components/DiscussionForum";
+import { DownloadableResources } from "@/components/DownloadableResources";
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -397,9 +398,10 @@ const CourseDetail = () => {
             )}
 
             <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
             <TabsTrigger value="instructor">Instructor</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="discussions">Discussions</TabsTrigger>
@@ -509,6 +511,10 @@ const CourseDetail = () => {
                 </Accordion>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="resources">
+            <DownloadableResources courseId={id || "1"} />
           </TabsContent>
 
           <TabsContent value="instructor">
