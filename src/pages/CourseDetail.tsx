@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import VideoPlayer from "@/components/VideoPlayer";
+import { DiscussionForum } from "@/components/DiscussionForum";
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -396,11 +397,12 @@ const CourseDetail = () => {
             )}
 
             <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
             <TabsTrigger value="instructor">Instructor</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="discussions">Discussions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -564,6 +566,10 @@ const CourseDetail = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="discussions">
+            <DiscussionForum courseId={id || "1"} />
           </TabsContent>
         </Tabs>
           </div>
