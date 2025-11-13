@@ -207,54 +207,66 @@ const CourseCard = ({
   getLevelColor: (level: string) => string;
 }) => {
   return (
-    <Card className="hover:shadow-lg transition-all hover:-translate-y-1">
-      <CardHeader>
-        <div className="flex items-start justify-between mb-2">
-          <Badge variant="secondary">{course.category}</Badge>
-          <Badge className={getLevelColor(course.level)}>{course.level}</Badge>
-        </div>
-        <CardTitle className="text-xl line-clamp-2">{course.title}</CardTitle>
-        <CardDescription>by {course.instructor}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>{course.duration}</span>
+    <Card className="hover:shadow-lg transition-all hover:-translate-y-1 group cursor-pointer">
+      <Link to={`/courses/${course.id}`} className="block">
+        <CardHeader>
+          <div className="flex items-start justify-between mb-2">
+            <Badge variant="secondary">{course.category}</Badge>
+            <Badge className={getLevelColor(course.level)}>{course.level}</Badge>
+          </div>
+          <CardTitle className="text-xl line-clamp-2 group-hover:text-primary transition-colors">
+            {course.title}
+          </CardTitle>
+          <CardDescription>by {course.instructor}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{course.duration}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <BookOpen className="h-4 w-4" />
+                <span>{course.lessons} lessons</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>{course.students.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2 text-warning">
+                <Star className="h-4 w-4 fill-current" />
+                <span className="font-medium">{course.rating}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BookOpen className="h-4 w-4" />
-              <span>{course.lessons} lessons</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{course.students.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2 text-warning">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="font-medium">{course.rating}</span>
+
+            {/* Progress for enrolled courses */}
+            {course.enrolled && (
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium">{course.progress}%</span>
+                </div>
+                <Progress value={course.progress} />
+              </div>
+            )}
+
+            {/* Action Button */}
+            <div onClick={(e) => e.preventDefault()}>
+              {course.enrolled ? (
+                <Link to={`/code-editor/${course.id}`}>
+                  <Button className="w-full">Continue Learning</Button>
+                </Link>
+              ) : (
+                <Button className="w-full" variant="outline">
+                  View Course
+                </Button>
+              )}
             </div>
           </div>
-
-          {/* Progress for enrolled courses */}
-          {course.enrolled && (
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">{course.progress}%</span>
-              </div>
-              <Progress value={course.progress} />
-            </div>
-          )}
-
-          {/* Action Button */}
-          <Button className="w-full" variant={course.enrolled ? "default" : "outline"}>
-            {course.enrolled ? "Continue Learning" : "Enroll Now"}
-          </Button>
-        </div>
-      </CardContent>
+        </CardContent>
+      </Link>
     </Card>
   );
 };
