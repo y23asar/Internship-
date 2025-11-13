@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +21,16 @@ import {
   Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import VideoPlayer from "@/components/VideoPlayer";
 
 const CourseDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const [activeLesson, setActiveLesson] = useState<{
+    title: string;
+    sectionIndex: number;
+    lessonIndex: number;
+  } | null>(null);
 
   const courseData: Record<string, any> = {
     "1": {
@@ -190,6 +197,30 @@ const CourseDetail = () => {
 
   const course = courseData[id || "1"] || courseData["1"];
 
+  const getNextLesson = (currentSectionIndex: number, currentLessonIndex: number) => {
+    const currentSection = course.curriculum[currentSectionIndex];
+    
+    // Check if there's a next lesson in the current section
+    if (currentLessonIndex + 1 < currentSection.lessons.length) {
+      return {
+        title: currentSection.lessons[currentLessonIndex + 1].title,
+        sectionIndex: currentSectionIndex,
+        lessonIndex: currentLessonIndex + 1,
+      };
+    }
+    
+    // Check if there's a next section
+    if (currentSectionIndex + 1 < course.curriculum.length) {
+      return {
+        title: course.curriculum[currentSectionIndex + 1].lessons[0].title,
+        sectionIndex: currentSectionIndex + 1,
+        lessonIndex: 0,
+      };
+    }
+    
+    return null;
+  };
+
   const getLevelColor = (level: string) => {
     switch (level) {
       case "Beginner":
@@ -333,7 +364,38 @@ const CourseDetail = () => {
 
       {/* Course Content */}
       <div className="container mx-auto px-4 py-12">
-        <Tabs defaultValue="overview" className="space-y-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {/* Video Player */}
+            {activeLesson && course.enrolled && (
+              <div className="mb-8">
+                <VideoPlayer
+                  lessonTitle={activeLesson.title}
+                  lessonId={`${activeLesson.sectionIndex}-${activeLesson.lessonIndex}`}
+                  courseId={course.id.toString()}
+                  onProgress={(progress) => {
+                    console.log(`Lesson progress: ${progress}%`);
+                  }}
+                  onComplete={() => {
+                    toast({
+                      title: "Lesson Complete!",
+                      description: "Great job! Moving to the next lesson.",
+                    });
+                    
+                    // Auto-play next lesson
+                    const nextLesson = getNextLesson(
+                      activeLesson.sectionIndex,
+                      activeLesson.lessonIndex
+                    );
+                    if (nextLesson) {
+                      setActiveLesson(nextLesson);
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="grid w-full grid-cols-4 lg:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
@@ -406,16 +468,30 @@ const CourseDetail = () => {
                           {section.lessons.map((lesson: any, lessonIndex: number) => (
                             <div
                               key={lessonIndex}
-                              className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors"
+                              className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer group"
+                              onClick={() => {
+                                if (lesson.type === "video" && course.enrolled) {
+                                  setActiveLesson({
+                                    title: lesson.title,
+                                    sectionIndex,
+                                    lessonIndex,
+                                  });
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                }
+                              }}
                             >
                               <div className="flex items-center gap-3">
                                 {lesson.completed ? (
                                   <CheckCircle2 className="h-5 w-5 text-success" />
+                                ) : lesson.type === "video" ? (
+                                  <PlayCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                 ) : (
                                   <PlayCircle className="h-5 w-5 text-muted-foreground" />
                                 )}
                                 <div>
-                                  <div className="font-medium text-sm">{lesson.title}</div>
+                                  <div className="font-medium text-sm group-hover:text-primary transition-colors">
+                                    {lesson.title}
+                                  </div>
                                   <div className="text-xs text-muted-foreground capitalize">
                                     {lesson.type}
                                   </div>
@@ -490,6 +566,64 @@ const CourseDetail = () => {
             </Card>
           </TabsContent>
         </Tabs>
+          </div>
+
+          {/* Sidebar with lesson list */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-lg">Course Lessons</CardTitle>
+                <CardDescription>Click any video lesson to start learning</CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-[600px] overflow-y-auto">
+                {course.enrolled ? (
+                  <div className="space-y-4">
+                    {course.curriculum.map((section: any, sectionIndex: number) => (
+                      <div key={sectionIndex}>
+                        <h4 className="font-semibold text-sm mb-2">{section.section}</h4>
+                        <div className="space-y-1">
+                          {section.lessons
+                            .filter((lesson: any) => lesson.type === "video")
+                            .map((lesson: any, lessonIndex: number) => {
+                              const actualLessonIndex = section.lessons.indexOf(lesson);
+                              return (
+                                <button
+                                  key={actualLessonIndex}
+                                  onClick={() => {
+                                    setActiveLesson({
+                                      title: lesson.title,
+                                      sectionIndex,
+                                      lessonIndex: actualLessonIndex,
+                                    });
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                  }}
+                                  className="w-full text-left p-2 rounded-md hover:bg-muted transition-colors text-sm flex items-center gap-2"
+                                >
+                                  {lesson.completed ? (
+                                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                                  ) : (
+                                    <PlayCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                  )}
+                                  <span className="truncate">{lesson.title}</span>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Enroll in this course to access all lessons
+                    </p>
+                    <Button onClick={handleEnrollment}>Enroll Now</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
