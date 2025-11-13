@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Code2, BookOpen, Trophy, Video, CheckCircle2, Clock } from "lucide-react";
+import DailyChallenge from "@/components/DailyChallenge";
 
 const Dashboard = () => {
   return (
@@ -67,6 +68,11 @@ const Dashboard = () => {
             color="text-info"
           />
         </div>
+
+        {/* Daily Challenge */}
+        <section className="mb-8">
+          <DailyChallenge currentStreak={7} completed={false} />
+        </section>
 
         {/* Continue Learning */}
         <section className="mb-8">
