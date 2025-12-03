@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -89,6 +90,22 @@ const Courses = () => {
     },
   ];
 
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
+  useEffect(() => {
+    const query = searchParams.get("search");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
+
+  const filteredCourses = allCourses.filter(course =>
+    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const getLevelColor = (level: string) => {
     switch (level) {
       case "Beginner":
@@ -145,6 +162,8 @@ const Courses = () => {
               type="text"
               placeholder="Search courses by title, instructor, or topic..."
               className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
@@ -160,15 +179,21 @@ const Courses = () => {
 
           <TabsContent value="all" className="mt-0">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allCourses.map((course) => (
-                <CourseCard key={course.id} course={course} getLevelColor={getLevelColor} />
-              ))}
+              {filteredCourses.length > 0 ? (
+                filteredCourses.map((course) => (
+                  <CourseCard key={course.id} course={course} getLevelColor={getLevelColor} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No courses found matching "{searchQuery}"
+                </div>
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="enrolled" className="mt-0">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allCourses
+              {filteredCourses
                 .filter((c) => c.enrolled)
                 .map((course) => (
                   <CourseCard key={course.id} course={course} getLevelColor={getLevelColor} />
@@ -178,7 +203,7 @@ const Courses = () => {
 
           <TabsContent value="popular" className="mt-0">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allCourses
+              {filteredCourses
                 .sort((a, b) => b.students - a.students)
                 .map((course) => (
                   <CourseCard key={course.id} course={course} getLevelColor={getLevelColor} />
@@ -188,7 +213,7 @@ const Courses = () => {
 
           <TabsContent value="new" className="mt-0">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allCourses.map((course) => (
+              {filteredCourses.map((course) => (
                 <CourseCard key={course.id} course={course} getLevelColor={getLevelColor} />
               ))}
             </div>
@@ -206,9 +231,13 @@ const CourseCard = ({
   course: any;
   getLevelColor: (level: string) => string;
 }) => {
+  const navigate = useNavigate();
   return (
-    <Card className="hover:shadow-lg transition-all hover:-translate-y-1 group cursor-pointer">
-      <Link to={`/courses/${course.id}`} className="block">
+    <Card
+      className="hover:shadow-lg transition-all hover:-translate-y-1 group cursor-pointer"
+      onClick={() => navigate(`/courses/${course.id}`)}
+    >
+      <div className="block">
         <CardHeader>
           <div className="flex items-start justify-between mb-2">
             <Badge variant="secondary">{course.category}</Badge>
@@ -253,7 +282,7 @@ const CourseCard = ({
             )}
 
             {/* Action Button */}
-            <div onClick={(e) => e.preventDefault()}>
+            <div onClick={(e) => e.stopPropagation()}>
               {course.enrolled ? (
                 <Link to={`/code-editor/${course.id}`}>
                   <Button className="w-full">Continue Learning</Button>
@@ -266,7 +295,7 @@ const CourseCard = ({
             </div>
           </div>
         </CardContent>
-      </Link>
+      </div>
     </Card>
   );
 };

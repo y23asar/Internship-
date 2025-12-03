@@ -77,6 +77,9 @@ export default {
         'base': 'var(--transition-base)',
         'smooth': 'var(--transition-smooth)',
       },
+      transitionTimingFunction: {
+        'out-quint': 'cubic-bezier(0.23, 1, 0.32, 1)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -99,10 +102,95 @@ export default {
             height: "0",
           },
         },
+        "fade-in-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "fade-in": {
+          "0%": {
+            opacity: "0",
+          },
+          "100%": {
+            opacity: "1",
+          },
+        },
+        "pulse-slow": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.5",
+          },
+        },
+        "marquee": {
+          "0%": {
+            transform: "translateX(0)",
+          },
+          "100%": {
+            transform: "translateX(-50%)",
+          },
+        },
+        "card-glide": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(40px) scale(0.95)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+          },
+        },
+        "floaty": {
+          "0%": {
+            transform: "translateY(0) rotate(-1deg)",
+          },
+          "50%": {
+            transform: "translateY(-10px) rotate(1deg)",
+          },
+          "100%": {
+            transform: "translateY(0) rotate(-1deg)",
+          },
+        },
+        "glow-pulse": {
+          "0%": {
+            opacity: "0.4",
+          },
+          "50%": {
+            opacity: "1",
+          },
+          "100%": {
+            opacity: "0.4",
+          },
+        },
+        "tilt": {
+          "0%": {
+            transform: "rotateX(8deg) rotateY(-6deg)",
+          },
+          "50%": {
+            transform: "rotateX(4deg) rotateY(4deg)",
+          },
+          "100%": {
+            transform: "rotateX(8deg) rotateY(-6deg)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
+        "fade-in": "fade-in 0.3s ease-out forwards",
+        "pulse-slow": "pulse-slow 3s infinite ease-in-out",
+        "marquee-slow": "marquee 22s linear infinite",
+        "card-glide": "card-glide 0.8s ease-out forwards",
+        "floaty": "floaty 6s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 4s ease-in-out infinite",
+        "tilt-loop": "tilt 8s ease-in-out infinite",
       },
     },
   },
