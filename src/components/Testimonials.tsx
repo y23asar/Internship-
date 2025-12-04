@@ -94,7 +94,7 @@ const Testimonials = () => {
           </div>
         ) : (
           <div className="grid lg:grid-cols-[1fr_1.2fr] gap-12 items-center">
-            {featured && <FeaturedTestimonial testimonial={featured} />}
+            {featured && <FeaturedTestimonial testimonial={featured} allTestimonials={allTestimonials} />}
 
             {supportingTestimonials.length > 0 && (
               <div className="relative h-[600px] overflow-hidden mask-gradient-y">
@@ -124,7 +124,7 @@ const Testimonials = () => {
   );
 };
 
-const FeaturedTestimonial = ({ testimonial }: { testimonial: typeof fallbackTestimonials[0] }) => (
+const FeaturedTestimonial = ({ testimonial, allTestimonials }: { testimonial: typeof fallbackTestimonials[0]; allTestimonials: typeof fallbackTestimonials }) => (
   <article className="relative h-full min-h-[500px] rounded-[40px] border border-border/80 bg-card p-10 shadow-2xl shadow-primary/10 overflow-hidden group hover:shadow-primary/20 transition-all duration-500 hover:-translate-y-1">
     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
     <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors duration-500" />
@@ -163,7 +163,7 @@ const FeaturedTestimonial = ({ testimonial }: { testimonial: typeof fallbackTest
 
         <div className="flex items-center gap-3">
           <div className="flex -space-x-3">
-            {testimonials.slice(0, 4).map((person) => (
+            {allTestimonials.slice(0, 4).map((person) => (
               <img
                 key={person.id}
                 src={person.image}

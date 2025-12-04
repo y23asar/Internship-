@@ -87,18 +87,15 @@ const bezelFeatures: BezelFeature[] = [
   },
 ];
 
-const ICON_DIAMETER = 64; // w-16 h-16 => 64px
-const RING_PADDING = 0; // visual offset so icons sit inside ring, accounting for 125% scale
-const normalizeAngle = (angle: number) => ((angle % 360) + 360) % 360;
-const sideFromAngle = (angle: number): "left" | "right" => (angle > 90 && angle < 270 ? "left" : "right");
+const ICON_SIZE = 64; // 16 * 4 = 64px
+const DEVICE_SIZE = 400; // Base size in pixels
+const RING_RADIUS = DEVICE_SIZE / 2 - ICON_SIZE / 2 - 20; // Distance from center to icon center
 
 const HeroDevice = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [ringRotation, setRingRotation] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [ringRadius, setRingRadius] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const bezelRef = useRef<HTMLDivElement>(null);
 
   const activeFeature = useMemo(() => bezelFeatures.find((feature) => feature.id === activeId), [activeId]);
 
@@ -127,38 +124,25 @@ const HeroDevice = () => {
     };
   }, [activeId]);
 
-  useEffect(() => {
-    if (!bezelRef.current) return;
-    const updateRadius = () => {
-      const size = bezelRef.current ? bezelRef.current.offsetWidth : 0;
-      if (size) {
-        // Account for icon size and extra padding for 125% scale
-        setRingRadius(size / 2 - ICON_DIAMETER / 2 - RING_PADDING);
-      }
-    };
-    updateRadius();
-    const observer = new ResizeObserver(updateRadius);
-    observer.observe(bezelRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   const handleFeatureSelect = (feature: BezelFeature) => {
     setActiveId(feature.id);
     setAutoRotate(false);
 
     // Calculate rotation needed to bring this feature to the Top (270 degrees)
-    // Current position = feature.angle + ringRotation
-    // Target position = 270 (Top)
-    // We want: (feature.angle + newRotation) % 360 = 270
-    // So: newRotation = 270 - feature.angle
-
-    // Find the shortest path
-    let targetRotation = 270 - feature.angle;
     const currentRotation = ringRotation % 360;
-
-    // Adjust target to be close to current to avoid spinning wildly
-    const diff = (targetRotation - currentRotation + 540) % 360 - 180;
+    const targetRotation = 270 - feature.angle;
+    
+    // Find the shortest path
+    const diff = ((targetRotation - currentRotation + 540) % 360) - 180;
     setRingRotation(currentRotation + diff);
+  };
+
+  // Convert angle to radians and calculate x, y position
+  const getIconPosition = (angle: number) => {
+    const radians = ((angle + ringRotation) * Math.PI) / 180;
+    const x = Math.cos(radians) * RING_RADIUS;
+    const y = Math.sin(radians) * RING_RADIUS;
+    return { x, y };
   };
 
   return (
@@ -166,7 +150,7 @@ const HeroDevice = () => {
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-blue-500/5 to-purple-500/5 blur-3xl opacity-50 pointer-events-none" />
 
       <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto overflow-visible">
-        {/* Left Side: Description (Visible when active) */}
+        {/* Left Side: Description */}
         <div className={cn("order-2 lg:order-1 transition-all duration-500", activeFeature ? "opacity-100 translate-x-0" : "opacity-50 lg:opacity-0 lg:-translate-x-10 pointer-events-none")}>
           {activeFeature ? (
             <DescriptionPanel feature={activeFeature} />
@@ -180,57 +164,56 @@ const HeroDevice = () => {
 
         {/* Right Side: The Bezel */}
         <div className="order-1 lg:order-2 relative flex items-center justify-center overflow-visible p-12">
-          {/* Main Device Container - Fixed size for alignment, scaled for responsiveness */}
-          <div ref={bezelRef} className="relative w-[320px] h-[320px] md:scale-125 transition-transform duration-500 overflow-visible">
+          {/* Main Device Container - Centered with flexbox */}
+          <div 
+            className="relative flex items-center justify-center"
+            style={{ 
+              width: `${DEVICE_SIZE}px`, 
+              height: `${DEVICE_SIZE}px`,
+              minWidth: `${DEVICE_SIZE}px`,
+              minHeight: `${DEVICE_SIZE}px`,
+              aspectRatio: '1 / 1'
+            }}
+          >
             {/* Central Glow */}
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-[80px] animate-pulse-slow" />
 
             {/* Outer Ring Background */}
-            <div className="absolute inset-0 rounded-full border border-primary/10 bg-background/40 backdrop-blur-md shadow-2xl z-0" />
+            <div className="absolute inset-0 rounded-full border border-primary/10 bg-background/40 backdrop-blur-md shadow-2xl" style={{ borderRadius: '50%' }} />
 
-            {/* Rotating Track Container - Sibling to background to avoid clipping/stacking issues */}
-            <div className="absolute inset-0 z-20 pointer-events-none" style={{ overflow: 'visible' }}>
-              <div
-                className="absolute inset-0 rounded-full transition-transform duration-1000 ease-out-quint"
-                style={{ transform: `rotate(${ringRotation}deg)`, overflow: 'visible' }}
-              >
-                {bezelFeatures.map((feature) => {
-                  const isActive = activeId === feature.id;
-                  // Calculate the total rotation that needs to be countered
-                  const totalRotation = ringRotation + feature.angle;
-
-                  return (
-                    <div
-                      key={feature.id}
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-auto"
-                      style={{
-                        transform: `rotate(${feature.angle}deg) translate(${ringRadius || 0}px)`
-                      }}
-                    >
-                      <button
-                        onClick={() => handleFeatureSelect(feature)}
-                        className={cn(
-                          "relative w-full h-full rounded-full flex items-center justify-center transition-all duration-500 border-2",
-                          isActive
-                            ? "bg-background border-primary shadow-[0_0_30px_rgba(16,185,129,0.4)] scale-125 z-50"
-                            : "bg-background/80 border-border hover:border-primary/50 hover:scale-110 z-10"
-                        )}
-                        style={{ transform: `rotate(${-totalRotation}deg)` }} // Counter-rotate icon to keep it upright
-                      >
-                        <feature.Icon className={cn("w-6 h-6 transition-colors", isActive ? "text-primary" : "text-muted-foreground")} />
-                        {isActive && (
-                          <span className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20" />
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Rotating Icons */}
+            {bezelFeatures.map((feature) => {
+              const isActive = activeId === feature.id;
+              const { x, y } = getIconPosition(feature.angle);
+              
+              return (
+                <button
+                  key={feature.id}
+                  onClick={() => handleFeatureSelect(feature)}
+                  className={cn(
+                    "absolute w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 border-2 z-20",
+                    isActive
+                      ? "bg-background border-primary shadow-[0_0_30px_rgba(16,185,129,0.4)] z-50"
+                      : "bg-background/80 border-border hover:border-primary/50"
+                  )}
+                  style={{
+                    left: `calc(50% + ${x}px)`,
+                    top: `calc(50% + ${y}px)`,
+                    transform: 'translate(-50%, -50%)',
+                    transition: 'left 1s cubic-bezier(0.23, 1, 0.32, 1), top 1s cubic-bezier(0.23, 1, 0.32, 1)',
+                  }}
+                >
+                  <feature.Icon className={cn("w-6 h-6 transition-colors", isActive ? "text-primary" : "text-muted-foreground")} />
+                  {isActive && (
+                    <span className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20" />
+                  )}
+                </button>
+              );
+            })}
 
             {/* Center Content */}
-            <div className="absolute inset-[25%] rounded-full bg-background/80 backdrop-blur-xl border border-white/10 shadow-inner flex flex-col items-center justify-center text-center p-4 z-0 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+            <div className="absolute inset-[25%] rounded-full bg-background/80 backdrop-blur-xl border border-white/10 shadow-inner flex flex-col items-center justify-center text-center p-4 z-10" style={{ borderRadius: '50%' }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50 rounded-full" style={{ borderRadius: '50%' }} />
               {activeFeature ? (
                 <div className="relative z-10 animate-fade-in">
                   <activeFeature.Icon className="w-12 h-12 text-primary mx-auto mb-2" />
